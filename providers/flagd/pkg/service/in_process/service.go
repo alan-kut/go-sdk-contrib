@@ -3,6 +3,8 @@ package process
 import (
 	"context"
 	"fmt"
+	parallel "sync"
+
 	"github.com/open-feature/flagd/core/pkg/evaluator"
 	"github.com/open-feature/flagd/core/pkg/logger"
 	"github.com/open-feature/flagd/core/pkg/model"
@@ -14,7 +16,6 @@ import (
 	of "github.com/open-feature/go-sdk/openfeature"
 	"golang.org/x/exp/maps"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	parallel "sync"
 )
 
 // InProcess service implements flagd flag evaluation in-process.
@@ -29,12 +30,18 @@ type InProcess struct {
 	syncEnd          context.CancelFunc
 }
 
+type CustomSync struct {
+	Sync sync.ISync
+	Uri  string
+}
+
 type Configuration struct {
 	Host              any
 	Port              any
 	Selector          string
 	TLSEnabled        bool
 	OfflineFlagSource string
+	Sync              *CustomSync
 }
 
 func NewInProcessService(cfg Configuration) *InProcess {
@@ -267,6 +274,11 @@ func (i *InProcess) appendMetadata(evalMetadata map[string]interface{}) {
 
 // makeSyncProvider is a helper to create sync.ISync and return the underlying uri used by it to the caller
 func makeSyncProvider(cfg Configuration, log *logger.Logger) (sync.ISync, string) {
+	if cfg.Sync != nil {
+		// custom configured sync provider
+		log.Info("operating in in-process mode with flags sourced from provided sync " + cfg.Sync.Uri)
+		return cfg.Sync.Sync, cfg.Sync.Uri
+	}
 	if cfg.OfflineFlagSource != "" {
 		// file sync provider
 		log.Info("operating in in-process mode with offline flags sourced from " + cfg.OfflineFlagSource)

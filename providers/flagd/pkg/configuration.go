@@ -2,10 +2,12 @@ package flagd
 
 import (
 	"fmt"
-	"github.com/go-logr/logr"
-	"github.com/open-feature/go-sdk-contrib/providers/flagd/internal/cache"
 	"os"
 	"strconv"
+
+	"github.com/go-logr/logr"
+	"github.com/open-feature/go-sdk-contrib/providers/flagd/internal/cache"
+	process "github.com/open-feature/go-sdk-contrib/providers/flagd/pkg/service/in_process"
 )
 
 type ResolverType string
@@ -50,6 +52,7 @@ type providerConfiguration struct {
 	Selector                         string
 	SocketPath                       string
 	TLSEnabled                       bool
+	InProcessSync                    *process.CustomSync
 
 	log logr.Logger
 }

@@ -3,13 +3,15 @@ package flagd
 import (
 	"context"
 	"fmt"
+	"sync"
+
 	"github.com/go-logr/logr"
+
 	"github.com/open-feature/go-sdk-contrib/providers/flagd/internal/cache"
 	"github.com/open-feature/go-sdk-contrib/providers/flagd/internal/logger"
 	"github.com/open-feature/go-sdk-contrib/providers/flagd/pkg/service/in_process"
 	rpcService "github.com/open-feature/go-sdk-contrib/providers/flagd/pkg/service/rpc"
 	of "github.com/open-feature/go-sdk/openfeature"
-	"sync"
 )
 
 type Provider struct {
@@ -76,6 +78,7 @@ func NewProvider(opts ...ProviderOption) *Provider {
 			Selector:          provider.providerConfiguration.Selector,
 			TLSEnabled:        provider.providerConfiguration.TLSEnabled,
 			OfflineFlagSource: provider.providerConfiguration.OfflineFlagSourcePath,
+			Sync:              provider.providerConfiguration.InProcessSync,
 		})
 	}
 
@@ -292,6 +295,12 @@ func WithRPCResolver() ProviderOption {
 func WithInProcessResolver() ProviderOption {
 	return func(p *Provider) {
 		p.providerConfiguration.Resolver = inProcess
+	}
+}
+
+func WithInProcessSync(sync *process.CustomSync) ProviderOption {
+	return func(p *Provider) {
+		p.providerConfiguration.InProcessSync = sync
 	}
 }
 
